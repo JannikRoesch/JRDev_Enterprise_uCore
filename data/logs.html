@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konsole – ESP32 Enterprise</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="light">
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <h2><i data-feather="terminal"></i> WebConsole</h2>
+
+    <div id="consoleOutput" style="background:#111; color:#0f0; padding:1em; height:300px; overflow-y:auto; font-family:monospace; font-size:0.9em;">
+      <div>[System] Konsole initialisiert...</div>
+    </div>
+
+    <form onsubmit="sendCommand(); return false;" style="margin-top:1em; display:flex; gap:0.5em;">
+      <input id="consoleInput" type="text" placeholder="Befehl eingeben..." style="flex:1;" />
+      <button type="submit"><i data-feather="arrow-right-circle"></i> Senden</button>
+    </form>
+
+    <div style="margin-top: 0.5em;">
+      <button onclick="clearConsole()"><i data-feather="trash-2"></i> Leeren</button>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 JRDev – ESP32 Enterprise</p>
+  </footer>
+
+  <script>
+    fetch("nav.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("nav-placeholder").innerHTML = html;
+        feather.replace();
+        document.getElementById("themeToggle").onclick = toggleTheme;
+      });
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+    }
+
+    function clearConsole() {
+      document.getElementById("consoleOutput").innerHTML = "<div>[System] Konsole geleert.</div>";
+    }
+
+    function appendToConsole(text, prefix = ">") {
+      const out = document.getElementById("consoleOutput");
+      const line = document.createElement("div");
+      line.textContent = `${prefix} ${text}`;
+      out.appendChild(line);
+      out.scrollTop = out.scrollHeight;
+    }
+
+    function sendCommand() {
+      const input = document.getElementById("consoleInput");
+      const command = input.value.trim();
+      if (command === "") return;
+
+      appendToConsole(command, "$");
+      input.value = "";
+
+      // Send command via WebSocket
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(command);
+      } else {
+        appendToConsole("WebSocket nicht verbunden.", "!");
+      }
+    }
+
+    const socket = new WebSocket("ws://" + location.hostname + "/ws");
+
+    socket.onmessage = function (event) {
+      appendToConsole(event.data, "<");
+    };
+
+    socket.onopen = () => appendToConsole("[Verbunden mit ESP32 WebSocket]", "✓");
+    socket.onclose = () => appendToConsole("[WebSocket getrennt]", "x");
+  </script>
+</body>
+</html>

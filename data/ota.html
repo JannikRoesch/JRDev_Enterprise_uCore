@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTA-Update – ESP32 Enterprise</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="light">
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <h2><i data-feather="upload"></i> OTA-Firmware-Update</h2>
+
+    <p>Gib die URL zur neuen Firmware (.bin) ein und starte das Update:</p>
+
+    <input id="otaUrl" type="text" placeholder="https://example.com/firmware.bin" style="width:100%; margin-bottom: 1em;" />
+
+    <div>
+      <button onclick="startOTA()"><i data-feather="zap"></i> OTA starten</button>
+    </div>
+
+    <p id="otaStatus" style="margin-top: 1em;"></p>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 JRDev – ESP32 Enterprise</p>
+  </footer>
+
+  <script>
+    fetch("nav.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("nav-placeholder").innerHTML = html;
+        feather.replace();
+        document.getElementById("themeToggle").onclick = toggleTheme;
+      });
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+    }
+
+    function startOTA() {
+      const url = document.getElementById("otaUrl").value;
+      if (!url.startsWith("http")) {
+        alert("Bitte eine gültige HTTPS-URL eingeben.");
+        return;
+      }
+
+      fetch("/ota", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      })
+      .then(res => {
+        if (res.ok) {
+          document.getElementById("otaStatus").textContent = "OTA gestartet – Gerät wird aktualisiert.";
+        } else {
+          document.getElementById("otaStatus").textContent = "Fehler beim OTA-Vorgang.";
+        }
+      })
+      .catch(() => {
+        document.getElementById("otaStatus").textContent = "Netzwerkfehler beim Senden der OTA-Anfrage.";
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konfiguration – ESP32 Enterprise</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    .toast {
+      position: fixed;
+      top: 1em;
+      right: 1em;
+      padding: 1em;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
+      z-index: 1000;
+      display: none;
+    }
+    label {
+      display: block;
+      margin-top: 0.7em;
+    }
+    input:invalid {
+      border-color: red;
+    }
+  </style>
+</head>
+<body class="light">
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <h2><i data-feather="settings"></i> Konfiguration</h2>
+
+    <div style="margin-bottom:1em;">
+      <button onclick="switchView('form')"><i data-feather="edit-3"></i> Formular</button>
+      <button onclick="switchView('json')"><i data-feather="code"></i> JSON</button>
+      <button onclick="exportConfig()"><i data-feather="download"></i> Export</button>
+      <label for="configFile" style="cursor:pointer;">
+        <i data-feather="upload"></i> Import
+        <input type="file" id="configFile" accept=".json" style="display:none;" />
+      </label>
+      <button onclick="loadConfig(true)"><i data-feather="rotate-ccw"></i> Zurücksetzen</button>
+    </div>
+
+    <div id="formView" style="display:none;"></div>
+    <div id="jsonView" style="display:none;">
+      <textarea id="configJson" rows="15" style="width:100%;"></textarea>
+    </div>
+
+    <button onclick="saveConfig()" style="margin-top:1em;"><i data-feather="save"></i> Speichern</button>
+    <div class="toast" id="toastMsg"></div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 JRDev – ESP32 Enterprise</p>
+  </footer>
+
+  <script>
+    let currentConfig = {};
+    let currentView = "form";
+    let metaInfo = {};
+
+    fetch("nav.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("nav-placeholder").innerHTML = html;
+        feather.replace();
+        document.getElementById("themeToggle").onclick = toggleTheme;
+      });
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+    }
+
+    function showToast(msg, success = true) {
+      const toast = document.getElementById("toastMsg");
+      toast.textContent = msg;
+      toast.style.background = success ? "#28a745" : "#dc3545";
+      toast.style.display = "block";
+      setTimeout(() => (toast.style.display = "none"), 4000);
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.getElementById("formView").style.display = view === "form" ? "block" : "none";
+      document.getElementById("jsonView").style.display = view === "json" ? "block" : "none";
+    }
+
+    function loadConfig(force = false) {
+      if (force && !confirm("Konfiguration wirklich zurücksetzen? Nicht gespeicherte Änderungen gehen verloren.")) return;
+      fetch("/config")
+        .then(res => res.json())
+        .then(data => {
+          currentConfig = data;
+          metaInfo = data.__meta__ || {};
+          renderForm(data);
+          document.getElementById("configJson").value = JSON.stringify(data, null, 2);
+          switchView("form");
+        });
+    }
+
+    function renderForm(config) {
+      const container = document.getElementById("formView");
+      container.innerHTML = "";
+
+      const topLevelKeys = Object.keys(config).filter(k => k !== "__meta__");
+
+      const tabNav = document.createElement("ul");
+      tabNav.style.display = "flex";
+      tabNav.style.gap = "1em";
+      tabNav.style.padding = "0.5em 0";
+
+      const tabContent = document.createElement("div");
+
+      topLevelKeys.forEach((groupKey, index) => {
+        const tabBtn = document.createElement("li");
+        tabBtn.textContent = groupKey;
+        tabBtn.style.cursor = "pointer";
+        tabBtn.style.textDecoration = index === 0 ? "underline" : "none";
+        tabBtn.onclick = () => {
+          [...tabContent.children].forEach(c => (c.style.display = "none"));
+          tabContent.querySelector(`#tab-${groupKey}`).style.display = "block";
+          [...tabNav.children].forEach(btn => (btn.style.textDecoration = "none"));
+          tabBtn.style.textDecoration = "underline";
+        };
+        tabNav.appendChild(tabBtn);
+
+        const group = config[groupKey];
+        const groupDiv = document.createElement("div");
+        groupDiv.id = `tab-${groupKey}`;
+        groupDiv.style.display = index === 0 ? "block" : "none";
+        groupDiv.style.padding = "1em 0";
+
+        Object.entries(group).forEach(([key, value]) => {
+          const fullKey = `${groupKey}.${key}`;
+          const label = document.createElement("label");
+          label.textContent = metaInfo[fullKey] || key;
+
+          let input;
+          if (typeof value === "boolean") {
+            input = document.createElement("input");
+            input.type = "checkbox";
+            input.checked = value;
+          } else {
+            input = document.createElement("input");
+            if (fullKey.toLowerCase().includes("password") || fullKey.toLowerCase().includes("secret")) {
+              input.type = "password";
+              input.required = true;
+            } else if (fullKey.toLowerCase().includes("url")) {
+              input.type = "url";
+            } else if (typeof value === "number") {
+              input.type = "number";
+              input.step = "any";
+            } else {
+              input.type = "text";
+            }
+            input.value = value;
+          }
+
+          input.dataset.group = groupKey;
+          input.dataset.key = key;
+          input.oninput = () => updateJsonFromForm();
+
+          groupDiv.appendChild(label);
+          groupDiv.appendChild(input);
+        });
+
+        tabContent.appendChild(groupDiv);
+      });
+
+      container.appendChild(tabNav);
+      container.appendChild(tabContent);
+    }
+
+    function updateJsonFromForm() {
+      const inputs = document.querySelectorAll("#formView input");
+      const temp = {};
+
+      inputs.forEach(input => {
+        const group = input.dataset.group;
+        const key = input.dataset.key;
+        if (!temp[group]) temp[group] = {};
+
+        if (input.type === "checkbox") {
+          temp[group][key] = input.checked;
+        } else if (input.type === "number") {
+          temp[group][key] = parseFloat(input.value);
+        } else {
+          temp[group][key] = input.value;
+        }
+      });
+
+      if (Object.keys(metaInfo).length > 0) {
+        temp["__meta__"] = metaInfo;
+      }
+
+      currentConfig = temp;
+      document.getElementById("configJson").value = JSON.stringify(temp, null, 2);
+    }
+
+    function updateFormFromJson() {
+      try {
+        const parsed = JSON.parse(document.getElementById("configJson").value);
+        currentConfig = parsed;
+        metaInfo = parsed.__meta__ || {};
+        renderForm(parsed);
+      } catch (e) {
+        showToast("JSON-Fehler: " + e.message, false);
+      }
+    }
+
+    function saveConfig() {
+      const json = currentView === "form"
+        ? JSON.stringify(currentConfig)
+        : document.getElementById("configJson").value;
+
+      fetch("/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: json
+      })
+        .then(res => {
+          if (res.ok) showToast("Gespeichert!");
+          else showToast("Fehler beim Speichern!", false);
+        })
+        .catch(() => {
+          showToast("Keine Verbindung zum Gerät!", false);
+        });
+    }
+
+    function exportConfig() {
+      const blob = new Blob([JSON.stringify(currentConfig, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "config.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("configFile").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          currentConfig = parsed;
+          metaInfo = parsed.__meta__ || {};
+          renderForm(parsed);
+          document.getElementById("configJson").value = JSON.stringify(parsed, null, 2);
+          switchView("form");
+          showToast("Konfiguration importiert.");
+        } catch (err) {
+          showToast("Fehler beim Import: " + err.message, false);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("configJson").addEventListener("input", updateFormFromJson);
+
+    loadConfig();
+  </script>
+</body>
+</html>

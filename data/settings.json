@@ -1,0 +1,21 @@
+{
+  "deviceName": "ESP32-Enterprise",
+  "wifi": {
+    "ssid": "MyNetwork",
+    "password": "SecretPass"
+  },
+  "mqtt": {
+    "broker": "mqtt.example.com",
+    "port": 8883,
+    "topic": "esp32/data"
+  },
+  "features": {
+    "enableOTA": true,
+    "enableMQTT": true,
+    "enableLogs": true
+  },
+  "sensorThreshold": {
+    "tempMin": 18,
+    "tempMax": 30
+  }
+}

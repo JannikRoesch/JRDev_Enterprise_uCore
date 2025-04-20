@@ -1,106 +1,96 @@
-# Entwicklung einer ESP32-Library
+# ESP32 Enterprise Library (JRDev)
 
-## Projektübersicht
-Dieses Projekt beschreibt die Entwicklung einer modularen und professionellen Arduino-ESP32-Library, die speziell für Enterprise-Anforderungen entwickelt wurde. Ziel ist es, eine hochwertige Vorlage für zukünftige Projekte zu schaffen, die Best Practices in C++ umsetzt. Die Library soll durch umfassende Dokumentation, Tutorials und eine durchdachte API auch Nicht-Experten die Nutzung ermöglichen.
-
----
-
-## Kernanforderungen & Umsetzung
-
-### 1. Modularer Aufbau
-Die Library ist in verschiedene Module unterteilt, um eine klare Struktur und Wiederverwendbarkeit zu gewährleisten:
-
-- **Core**:
-  - Steuerung der CPU-Frequenz
-  - Watchdog-Integration zur Systemüberwachung
-  - Ausgabe von Chip-Informationen (z. B. Chip-ID, Flash-Größe)
-
-- **Network**:
-  - Unterstützung für WiFi (STA/AP-Modus)
-  - Bluetooth Low Energy (BLE)
-  - MQTT-Integration mit TLS-Verschlüsselung
-  - Over-the-Air (OTA) Updates für Firmware-Aktualisierungen
-
-- **Communication**:
-  - Unterstützung für I2C, SPI und UART
-  - USB-HID/Host-Funktionalität
-  - WebSerial für Debugging und Kommunikation
-
-- **System**:
-  - FreeRTOS-Task-Management
-  - Power-Management für energieeffiziente Anwendungen
-  - Dateisystem-Integration (LittleFS)
-
-- **Utilities**:
-  - Konfigurationsmanager zur zentralen Steuerung von Parametern
-  - Fehlerlogging mit verschiedenen Log-Leveln
+Diese Library stellt eine skalierbare, modulare Architektur für professionelle ESP32-Projekte bereit. Sie orientiert sich an Enterprise-Best-Practices und eignet sich für Produktivprojekte, Schulung, Demos und Wiederverwendung in anderen Projekten.
 
 ---
 
-### 2. Codequalität
-Die Library setzt auf moderne C++-Standards und garantiert eine hohe Codequalität:
-- **Klar strukturierte Header- und Implementierungsdateien** (`.h/.cpp`)
-- Nutzung von ESP-IDF für Low-Level-Funktionen wie `gpio_config`
-- Implementierung moderner C++ Features:
-  - **Templates** für wiederverwendbare Komponenten
-  - **Lambda-Ausdrücke** für effiziente Callbacks
-  - **Smart Pointer** zur Speicherverwaltung
+## Features
+
+- **Core**: CPU-Frequenzsteuerung, Watchdog, ChipInfo
+- **Network**: WiFi (STA), MQTT (TLS), OTA
+- **System**: FreeRTOS, Deep/Light Sleep, Filesystem (LittleFS)
+- **Utilities**: Logging, Konfiguration, Fehlerkatalog
+- **Communication**: UART, (SPI/I2C optional)
 
 ---
 
-### 3. Konfigurationsmanagement
-Eine flexible Konfiguration ist essenziell für eine modulare Library:
-- **Zentrale Konfigurationsdatei** (`uConfig.h`) mit:
-  - Profilen für verschiedene Anwendungsfälle
-  - Hardware-Overrides für spezifische Plattformen
-- Automatisches Fallback bei Konfigurationsfehlern
+## Getting Started
+
+### Setup via PlatformIO
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
+
+### Beispielcode
+
+```cpp
+#include "Network/WiFiManager.h"
+#include "Network/MQTTManager.h"
+#include "Network/OTAUpdater.h"
+#include "System/PowerManager.h"
+
+void setup() {
+    JRDev::WiFiManager::connect();
+    JRDev::MQTTManager::begin();
+    JRDev::OTAUpdater::begin();
+    JRDev::MQTTManager::publish("status", "Online");
+}
+
+void loop() {
+    JRDev::MQTTManager::loop();
+    JRDev::OTAUpdater::handle();
+}
+```
+
+### Projektstruktur
+
+```
+ESP32_Enterprise_Lib/
+├── src/
+│   ├── Core/
+│   ├── Network/
+│   ├── Communication/
+│   ├── System/
+│   └── Utilities/
+├── config/
+├── examples/
+├── test/
+├── docs/
+├── bin/
+├── Cheatsheet_v1.0.0.pdf
+├── Chatverlauf_Code_ESP32.md
+├── platformio.ini
+├── library.properties
+└── README.md
+```
+
+### Dokumentation
+
+- Vollständig kommentierter Code (Doxygen-kompatibel)
+- `docs/errors.md` – Fehlercodes mit Lösungsvorschlägen
+- `docs/uml/uml.puml` – Architekturdiagramm via PlantUML
+- `docs/html/` – HTML-Export der API-Referenz
+
+### CI / Qualitätssicherung
+
+- Unit-Tests mit Unity
+- CI-Vorlage via GitHub Actions
+- Statische Analyse: Clang-Tidy
+- Speicherprüfung über ESP-IDF Tools (valgrind-ähnlich)
+
+### Beispiele
+
+- BasicUsage – Blinken, ChipInfo, Logging
+- FullSystemDemo – WiFi, OTA, MQTT
+- LowPowerDemo – Sleep-Mode, Filesystem
 
 ---
 
-### 4. Dokumentation
-Um Entwicklern die Nutzung der Library zu erleichtern, wird eine umfassende Dokumentation bereitgestellt:
-- Markdown/HTML-API-Referenz mit PlantUML-Diagrammen
-- Schritt-für-Schritt-Tutorials zu wichtigen Themen:
-  - OTA-Updates
-  - Low-Power-Modi
-- Interaktive Pinout-Dokumentation zur Visualisierung der Hardware-Funktionen
+### Lizenz
+MIT License – frei für kommerzielle und nicht-kommerzielle Nutzung.
+
 
 ---
-
-### 5. DevOps & Tests
-Die Library wird durch moderne DevOps-Methoden unterstützt:
-- Unit-Tests mit **PlatformIO**
-- CI/CD-Pipeline für:
-  - Automatisierte Builds
-  - Unit-Tests zur Sicherstellung der Funktionalität
-
----
-
-## Neuerungen und Verbesserungen in Version 2.2.0
-Die Version 2.2.0 bringt eine Vielzahl von neuen Features, Verbesserungen und Bugfixes mit sich:
-
-### **Neue Funktionen**
-- Implementierung eines **Konfigurationsmanagers** für flexible Profile und automatische Fallbacks.
-- Unterstützung für **USB-HID/Host-Kommunikation** und **WebSerial**.
-- Erweiterte **MQTT-Funktionalität** mit TLS-Unterstützung.
-
-### **Verbesserungen**
-- Optimierung der **FreeRTOS-Task-Verwaltung** für höhere Stabilität.
-- Verbesserte **Fehlerlogging-Funktionalität** mit anpassbaren Log-Leveln.
-- Erweiterte **WiFi-Funktionen**, einschließlich verbesserten Verbindungsmanagements.
-
-### **Bugfixes**
-- Behebung von Speicherlecks bei der Nutzung von **Smart Pointern**.
-- Stabilitätsfixes im Bereich **Dateisystem-Integration** (LittleFS).
-
----
-
-## Lieferumfang
-Die Library wird gemäß dem Arduino-Library-Standard strukturiert geliefert:
-- `/src`: Quellcode der Library
-- `/examples`: Beispielprojekte zur Demonstration der Funktionen
-- `/docs`: API-Referenz und Tutorials
-
-Zusätzlich umfasst der Lieferumfang:
-- **Komplette Unit-Tests** zur Sicherstellung der Funktionalität
-- **CI/CD-Pipeline** für kontinuierliche Integration und Deployment

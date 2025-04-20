@@ -1,0 +1,100 @@
+:root {
+  --bg-light: #f9f9f9;
+  --text-light: #222;
+  --bg-dark: #1e1e1e;
+  --text-dark: #eee;
+  --accent: #007bff;
+  --card: #ffffff22;
+  --active: #ffa500;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+body.light {
+  background: var(--bg-light);
+  color: var(--text-light);
+}
+body.dark {
+  background: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+header {
+  background: var(--accent);
+  color: white;
+  padding: 1em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav {
+  background: #444;
+  color: white;
+}
+nav ul {
+  margin: 0;
+  padding: 0.5em;
+  list-style: none;
+  display: flex;
+  gap: 1em;
+}
+nav a {
+  color: white;
+  text-decoration: none;
+}
+nav a.active {
+  font-weight: bold;
+  color: var(--active);
+}
+
+main {
+  padding: 1em;
+}
+section {
+  margin-bottom: 2em;
+  padding: 1em;
+  background: var(--card);
+  border-radius: 0.5em;
+}
+
+footer {
+  background: #222;
+  color: white;
+  text-align: center;
+  padding: 1em;
+  font-size: 0.9em;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.5em 1em;
+  margin-top: 0.5em;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+  nav ul {
+    flex-direction: column;
+  }
+
+  main, section {
+    padding: 0.5em;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,28 @@
+@startuml
+
+skinparam packageStyle rectangle
+
+package "JRDev::Network" {
+  class WiFiManager
+  class MQTTManager
+  class OTAUpdater
+}
+
+package "JRDev::System" {
+  class PowerManager
+  class FilesystemManager
+}
+
+package "JRDev::Utilities" {
+  class Logger
+  class ConfigManager
+  class ErrorCode
+}
+
+WiFiManager --> MQTTManager
+MQTTManager --> OTAUpdater
+OTAUpdater --> FilesystemManager
+PowerManager --> Logger
+ConfigManager --> Logger
+
+@enduml

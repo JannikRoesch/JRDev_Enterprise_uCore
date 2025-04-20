@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – ESP32 Enterprise</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="charts.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="light">
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <h2><i data-feather="home"></i> Übersicht</h2>
+    <p>Willkommen im ESP32 Enterprise Dashboard!</p>
+
+    <section id="chart">
+      <h3><i data-feather="activity"></i> Live-Daten</h3>
+      <canvas id="liveChart" height="100"></canvas>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 JRDev – ESP32 Enterprise</p>
+  </footer>
+
+  <script>
+    fetch("nav.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("nav-placeholder").innerHTML = html;
+        feather.replace();
+        document.getElementById("themeToggle").onclick = toggleTheme;
+      });
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MQTT-Test – ESP32 Enterprise</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="light">
+  <div id="nav-placeholder"></div>
+
+  <main>
+    <h2><i data-feather="send"></i> MQTT-Testnachricht</h2>
+
+    <p>Gib ein MQTT-Topic und einen Payload ein:</p>
+
+    <input id="mqttTopic" type="text" placeholder="Thema (z. B. test/status)" style="width:100%;" />
+    <textarea id="mqttPayload" rows="3" placeholder="Nachricht..." style="width:100%; margin-top:0.5em;"></textarea>
+
+    <button onclick="sendMQTTTest()"><i data-feather="send"></i> Senden</button>
+    <p id="mqttResult" style="margin-top:0.5em;"></p>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 JRDev – ESP32 Enterprise</p>
+  </footer>
+
+  <script>
+    fetch("nav.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("nav-placeholder").innerHTML = html;
+        feather.replace();
+        document.getElementById("themeToggle").onclick = toggleTheme;
+      });
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+    }
+
+    function sendMQTTTest() {
+      const topic = document.getElementById("mqttTopic").value;
+      const payload = document.getElementById("mqttPayload").value;
+
+      fetch("/mqtt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, payload })
+      })
+        .then(res => {
+          document.getElementById("mqttResult").textContent = res.ok
+            ? "Nachricht gesendet."
+            : "Fehler beim Senden.";
+        })
+        .catch(() => {
+          document.getElementById("mqttResult").textContent = "Verbindung fehlgeschlagen.";
+        });
+    }
+  </script>
+</body>
+</html>
